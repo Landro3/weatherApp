@@ -39,86 +39,37 @@ class smartMirror():
         self.forecastFrame.configure(background=self.background)
         self.forecastFrame.grid(row=2, column=0, sticky=W)
         
-        # Location label
-        self.locationLabel = Label(self.currentFrame,
-                              font=(self.Font1, 75),
-                              bg=self.background,
-                              fg=self.foreground)
-        self.locationLabel.grid(row=0, column=0, columnspan=2, sticky=W)
-        
-        # Current image
-        self.iconImage = Label(self.currentFrame,bg=self.background)
-        self.iconImage.grid(row=1, column=0, rowspan=2, sticky=NE)
-        
-        # Current temp
-        self.currentTempLabel = Label(self.currentFrame,
-                                 font=(self.Font1,80),
-                                 bg=self.background,
-                                 fg=self.foreground)
-        self.currentTempLabel.grid(row=1, column=1)
-        
-        # Time Label
-        self.timeLabel = Label(self.timeFrame,
-                          font=(self.Font1,120),
-                          bg=self.background,
-                          fg=self.foreground)
-        self.timeLabel.grid(row=0, column=0)
-        
-        # Current status
-        self.currentStatusLabel = Label(self.currentFrame,
-                                   font=(self.Font1,45),
-                                   bg=self.background,
-                                   fg=self.foreground)
-        self.currentStatusLabel.grid(row=2, column=1, sticky=N)
-        
-        # Forecast info arrays
-        self.dayNames = []
-        self.dayTemps = []
-        self.dayImages = []
-        # Day info class references in lists
-        for day in range(3):
-            # Day names
-            self.dayName = Label(self.forecastFrame,
-                      font=(self.Font1,60),
-                      bg=self.background,
-                      fg=self.foreground)
-            self.dayName.grid(row=day, column=0, sticky=NW)
-            self.dayNames.append(self.dayName)
-            # Day temps
-            self.dayTemp = Label(self.forecastFrame,
-                                 font=(self.Font1,60),
-                                 bg=self.background,
-                                 fg=self.foreground)
-            self.dayTemp.grid(row=day, column=1)
-            self.dayTemps.append(self.dayTemp)
-            # Day images
-            self.dayImage = Label(self.forecastFrame,
-                                  bg=self.background)
-            self.dayImage.grid(row=day, column=2)
-            self.dayImages.append(self.dayImage)
-        
-        # Update variable to only update weather once every 5 minutes
+        # Update variable to only update weather once every 10 minutes
         # Time display is updated every second
         self.updateCounter = 0
     
         # Call draw GUI function
-        self.drawGUI()
-        self.root.mainloop()
+        self.drawGUI(self.updateCounter)
 
-    def drawGUI(self):
+    def drawGUI(self, updateCounter):
+       
         # Draw Time
         # Display and hide the colon every second
-        if self.updateCounter % 2 == 0:
+        if updateCounter % 2 == 0:
             time = strftime('%H:%M %p ', localtime())
         else:
             time = strftime('%H %M %p ', localtime())
-        self.timeLabel.configure(text=time)
+        timeLabel = Label(self.timeFrame,
+                          text=time,
+                          font=(self.Font1,120),
+                          bg=self.background,
+                          fg=self.foreground)
+        timeLabel.grid(row=0, column=0)
         
-        """ Update all weather info every 5 minutes"""
+        """ Update all weather info every 3 minutes"""
+        # Forecast day, image, and temps
         # Only update after update counter has reached 5 minutes
-        if self.updateCounter == 0 or self.updateCounter == 5*60:
+        #if updateCounter == 0 or updateCounter == 5*60:
+        if updateCounter >= 0:
+            
             # Reset counter so that it won't update twice at 5 minutes
-            self.updateCounter = 1
+            #updateCounter = 1
+
             # Get current info from http call
             webURL = urlopen(self.url)
             data = webURL.read()
@@ -133,8 +84,13 @@ class smartMirror():
         
             # Location string
             location = weatherDictionary['location']['city']
-            self.locationLabel.configure(text=location)
-            
+            locationLabel = Label(self.currentFrame,
+                                  text=location,
+                                  font=(self.Font1, 75),
+                                  bg=self.background,
+                                  fg=self.foreground)
+            locationLabel.grid(row=0, column=0, columnspan=2, sticky=W)
+                                  
             # Current weather data
             currentWeather = weatherDictionary['current_observation']
             # 3 day forecast data
@@ -143,36 +99,68 @@ class smartMirror():
             # Current weather image
             icon = currentWeather['icon']
             photoImage = PhotoImage(file=self.icon_match(icon))
-            self.iconImage.configure(image=photoImage)
-            self.iconImage.image = photoImage
+            iconImage = Label(self.currentFrame, image=photoImage, bg=self.background)
+            iconImage.image = photoImage
+            iconImage.grid(row=1, column=0, rowspan=2, sticky=NE)
                               
             # Current weather temperature
             # Temp string
             currentTemp = str(int(currentWeather['temp_f']))
-            self.currentTempLabel.configure(text=currentTemp)
+            currentTempLabel = Label(self.currentFrame,
+                                     text=currentTemp,
+                                     font=(self.Font1,80),
+                                     bg=self.background,
+                                     fg=self.foreground)
+            currentTempLabel.grid(row=1, column=1)
                               
             # Current status string
-            currentStatus = currentWeather['weather']
-            self.currentStatusLabel.configure(text=currentStatus)
+            currentStatusString = currentWeather['weather']
+            if updateCounter == 0:
+                currentStatusString = currentWeather['weather']
+            else:
+                currentStatusString = 'LOL'
+            currentStatusLabel = Label(self.currentFrame,
+                                       text=currentStatusString,
+                                       font=(self.Font1,45),
+                                       bg=self.background,
+                                       fg=self.foreground)
+            print('iran')
+ 
+            currentStatusLabel.grid(row=2, column=1, sticky=N)
 
             for day in range(3):
                 # Draw day name
-                dayName = forecast[day]['date']['weekday_short']
-                dayName = dayName.upper() + ' '
-                self.dayNames[day].configure(text=dayName)
+                day_name = forecast[day]['date']['weekday_short']
+                day_name = day_name.upper() + ' '
+                w = Label(self.forecastFrame,
+                          text=day_name,
+                          font=(self.Font1,60),
+                          bg=self.background,
+                          fg=self.foreground)
+                w.grid(row=day+3, column=0, sticky=NW)
                 # Draw forecast temps
-                tempHigh = forecast[day]['high']['fahrenheit']
-                tempLow = forecast[day]['low']['fahrenheit']
-                dayTempString = tempHigh + ' \n' + tempLow + ' '
-                self.dayTemps[day].configure(text=dayTempString)
+                temp_high = forecast[day]['high']['fahrenheit']
+                temp_low = forecast[day]['low']['fahrenheit']
+                temp_string = temp_high + ' \n' + temp_low + ' '
+                w = Label(self.forecastFrame,
+                          text=temp_string,
+                          font=(self.Font1,60),
+                          bg=self.background,
+                          fg=self.foreground)
+                w.grid(row=day+3, column=1)
                 # Draw forecast image
                 icon = forecast[day]['icon']
                 photoImage = PhotoImage(file=self.icon_match(icon))
-                self.dayImages[day].configure(image=photoImage)
-                self.dayImages[day].image = photoImage
-        self.updateCounter += 1
-        self.root.after(1000, self.drawGUI)
-
+                w = Label(self.forecastFrame,
+                          image=photoImage,
+                          bg=self.background)
+                w.image = photoImage
+                w.grid(row=day+3, column=2)
+        updateCounter += 1
+        self.root.after(1000, self.drawGUI, updateCounter)
+        self.root.mainloop()
+    
+    def updateGUI
 
     def icon_match(self, icon):
         icons = {
