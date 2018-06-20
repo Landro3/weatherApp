@@ -109,9 +109,9 @@ class smartMirror():
         # Draw Time
         # Display and hide the colon every second
         if self.updateCounter % 2 == 0:
-            time = strftime('%H:%M %p ', localtime())
+            time = strftime('%I:%M %p ', localtime())
         else:
-            time = strftime('%H %M %p ', localtime())
+            time = strftime('%I %M %p ', localtime())
         self.timeLabel.configure(text=time)
         
         """ Update all weather info every 5 minutes"""
