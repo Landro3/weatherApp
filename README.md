@@ -6,4 +6,4 @@ Steps to load the panel:
   2. Move to desired directory
   3. Open terminal 
   4. cd to the directory of the script
-  5. Run the following command: python3 <name of file>
+  5. Run the following command: python3 + name of file
