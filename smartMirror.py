@@ -216,7 +216,7 @@ class smartMirror():
                     i += 5
                 elif workoutText[i:i+6] == "&#215;":
                     workoutString += "x"
-                    print("x", end="")
+                    # print("x", end="")
                     i += 6
                 elif workoutText[i:i+7] == "&#8211;":
                     workoutString += "-"
