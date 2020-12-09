@@ -1,10 +1,10 @@
 # Class to handle main panel
 import json
-from tkinter import *
+import ssl
+from tkinter import Tk, Label, Frame, N, NE, E, SE, S, SW, W, NW, PhotoImage
 from urllib.request import urlopen
 from time import localtime, strftime
 from datetime import datetime
-import ssl
 
 class smartMirror():
     def __init__(self):
