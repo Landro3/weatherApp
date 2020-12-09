@@ -3,6 +3,8 @@ import json
 from tkinter import *
 from urllib.request import urlopen
 from time import localtime, strftime
+from datetime import datetime
+import ssl
 
 class smartMirror():
     def __init__(self):
@@ -10,13 +12,15 @@ class smartMirror():
         self.background = 'black'
         self.foreground = 'white'
         self.Font1 = 'Helvetica'
-        self.weatherURL = 'http://api.wunderground.com/api/3c8e35eb14de7c47/forecast/geolookup/conditions/q/MD/Baltimore.json'
-        self.workoutURL = 'http://www.bluecrabcrossfit.com/hanover/wod/'
+        self.weatherURL = 'https://api.openweathermap.org/data/2.5/onecall?lat=39.290386&lon=-76.612190&exclude=minutely,hourly&appid=b0083b440937e38f4ef91559b7c3a7b7'
+
+        # Get current location
+
 
         # Create top window frame
         self.root = Tk()
         self.root.title("Weather App")
-        self.root.configure(background=self.background)
+        self.root.configure(background=self.background, padx=25, pady=50)
 
         # Create current info frame
         self.currentFrame = Frame(self.root)
@@ -40,17 +44,19 @@ class smartMirror():
         self.forecastFrame.configure(background=self.background)
         self.forecastFrame.grid(row=2, column=0, sticky=W)
 
-        # Create workout info frame to go below current timeFrame
-        self.workoutFrame = Frame(self.root)
-        self.workoutFrame.configure(background=self.background)
-        self.workoutFrame.grid(row=2, column=1, sticky=E)
-
         # Time Label
         self.timeLabel = Label(self.timeFrame,
                           font=(self.Font1,120),
                           bg=self.background,
                           fg=self.foreground)
         self.timeLabel.pack()
+
+        # Date label
+        self.dateLabel = Label(self.timeFrame,
+                           font=(self.Font1,60),
+                           bg=self.background,
+                           fg=self.foreground)
+        self.dateLabel.pack()
 
         # Location label
         self.locationLabel = Label(self.currentFrame,
@@ -104,13 +110,6 @@ class smartMirror():
             self.dayImage.grid(row=day, column=2)
             self.dayImages.append(self.dayImage)
 
-        # Workout label
-        self.workoutLabel = Label(self.workoutFrame,
-                                  font=(self.Font1,40),
-                                  bg=self.background,
-                                  fg=self.foreground)
-        self.workoutLabel.pack()
-
         # Update variable to only update weather once every 5 minutes
         # Time display is updated every second
         self.updateCounter = 0
@@ -123,140 +122,100 @@ class smartMirror():
         # Draw Time
         # Display and hide the colon every second
         if self.updateCounter % 2 == 0:
-            time = strftime('%I:%M %p ', localtime())
+            time = strftime('%-I:%M %p ', localtime())
         else:
-            time = strftime('%I %M %p ', localtime())
+            time = strftime('%-I %M %p ', localtime())
         self.timeLabel.configure(text=time)
+
+        # Set date
+        self.dateLabel.configure(text= strftime('%-d %b %Y', localtime()))
 
         """ Update all weather info every 5 minutes"""
         # Only update after update counter has reached 5 minutes
         if self.updateCounter == 0 or self.updateCounter == 5*60:
             # Reset counter so that it won't update twice at 5 minutes
             self.updateCounter = 1
+
             # Get current info from http call
+            ssl._create_default_https_context = ssl._create_unverified_context
             webText = urlopen(self.weatherURL)
             data = webText.read()
             encoding = webText.info().get_content_charset('utf-8')
             weatherDictionary = json.loads(data.decode(encoding))
 
-            # Get workout info from http call
-            webText = urlopen(self.workoutURL)
-            workoutText = webText.read().decode('utf-8')
-
-
-            """ File for work offline
-            f = 'baltimore.json'
-            with open(f,'r') as f:
-            weatherDictionary = json.loads(f.read())
-            """
+            # File for work offline
+            # f = 'baltimore.json'
+            # with open(f,'r') as f:
+            #     weatherDictionary = json.loads(f.read())
 
             # Location string
-            location = weatherDictionary['location']['city']
+            location = 'Baltimore'
             self.locationLabel.configure(text=location)
 
             # Current weather data
-            currentWeather = weatherDictionary['current_observation']
+            currentWeather = weatherDictionary['current']
             # 3 day forecast data
-            forecast = weatherDictionary['forecast']['simpleforecast']['forecastday']
+            forecast = weatherDictionary['daily']
 
             # Current weather image
-            icon = currentWeather['icon']
+            icon = currentWeather['weather'][0]['main']
             photoImage = PhotoImage(file=self.icon_match(icon))
             self.iconImage.configure(image=photoImage)
             self.iconImage.image = photoImage
 
             # Current weather temperature
             # Temp string
-            currentTemp = str(int(currentWeather['temp_f']))
+            currentTemp = str(int(self.kToF(currentWeather['temp'])))
             self.currentTempLabel.configure(text=currentTemp)
 
             # Current status string
-            currentStatus = currentWeather['weather']
+            currentStatus = currentWeather['weather'][0]['main']
             self.currentStatusLabel.configure(text=currentStatus)
 
-            for day in range(3):
+            for day in range(1, 4):
                 # Draw day name
-                dayName = forecast[day]['date']['weekday_short']
+                dayName = datetime.fromtimestamp(forecast[day]["dt"]).strftime('%a')
                 dayName = dayName.upper() + ' '
-                self.dayNames[day].configure(text=dayName)
+                self.dayNames[day - 1].configure(text=dayName)
                 # Draw forecast temps
-                tempHigh = forecast[day]['high']['fahrenheit']
-                tempLow = forecast[day]['low']['fahrenheit']
+                tempHigh = str(int(self.kToF(forecast[day]['temp']['max'])))
+                tempLow = str(int(self.kToF(forecast[day]['temp']['min'])))
                 dayTempString = tempHigh + ' \n' + tempLow + ' '
-                self.dayTemps[day].configure(text=dayTempString)
+                self.dayTemps[day - 1].configure(text=dayTempString)
                 # Draw forecast image
-                icon = forecast[day]['icon']
+                icon = forecast[day]['weather'][0]['main']
                 photoImage = PhotoImage(file=self.icon_match(icon))
-                self.dayImages[day].configure(image=photoImage)
-                self.dayImages[day].image = photoImage
-
-
-            '''
-            for c in string:
-                if c == '>':
-                    print(c)
-                elif c != '\n' and c != '\t':
-                    print(c, end="")
-            '''
-            # Header above workout text
-            i = workoutText.find("<h2>Blue")
-
-            # Run until finding the end of the text
-            workoutString = ""
-            while workoutText [i:i+2] != '<a':
-                if workoutText[i] == '>':
-                    i += 1
-                elif workoutText[i] == '<':
-                    i += 1
-                    while workoutText[i] != '>':
-                        i += 1
-                elif workoutText[i:i+5] == "&#37;":
-                    workoutString += "%"
-                    # print("%", end="")
-                    i += 5
-                elif workoutText[i:i+6] == "&#215;":
-                    workoutString += "x"
-                    # print("x", end="")
-                    i += 6
-                elif workoutText[i:i+7] == "&#8211;":
-                    workoutString += "-"
-                    # print("-", end="")
-                    i += 7
-                else:
-                    workoutString += workoutText[i]
-                    # print(string[i], end="")
-                    i += 1
-            self.workoutLabel.configure(text=workoutString, justify=RIGHT)
+                self.dayImages[day - 1].configure(image=photoImage)
+                self.dayImages[day - 1].image = photoImage
         self.updateCounter += 1
         self.root.after(1000, self.drawGUI)
 
+    def kToF(self, kelvin):
+        fahrenheit = (kelvin - 273.15) * (9 / 5) + 32
+        return fahrenheit
 
     def icon_match(self, icon):
         icons = {
-            'chanceflurries':'images/snow.gif',
-            'chancerain':'images/rain.gif',
-            'chancesleet':'images/snow.gif',
-            'chancesnow':'images/snow.png',
-            'chancestorms':'images/thunderstorm.gif',
-            'chancetstorms':'images/thunderstorm.gif',
-            'clear':'images/sun.gif',
-            'cloudy':'images/cloudy.gif',
-            'flurries':'images/snow.gif',
-            'fog':'images/partcloudy.gif',
-            'hazy':'images/partcloudy.gif',
-            'mostlycloudy':'images/partcloudy.gif',
-            'mostlysunny':'images/partcloudy.gif',
-            'partlycloudy':'images/partcloudy.gif',
-            'partlysunny':'images/partcloudy.gif',
-            'sleet':'images/snow.gif',
-            'rain':'images/rain.gif',
-            'snow':'images/snow.gif',
-            'sunny':'images/sun.gif',
-            'tstorms':'images/thunderstorm.gif',
-            'unknown':'images/thunderstorm.gif'
+            'Ash': 'images/partcloudy.gif',
+            'Clear': 'images/sun.gif',
+            'Clouds': 'images/cloudy.gif',
+            'Drizzle': 'images/rain.gif',
+            'Dust': 'images/partcloudy.gif',
+            'Fog': 'images/partcloudy.gif',
+            'Haze': 'images/partcloudy.gif',
+            'Mist': 'images/partcloudy.gif',
+            'Rain': 'images/rain.gif',
+            'Sand': 'images/partcloudy.gif',
+            'Smoke': 'images/partcloudy.gif',
+            'Snow': 'images/snow.gif',
+            'Thunderstorm': 'images/thunderstorm.gif',
+            'Tornado': 'images/wind.gif'
         }
         match = icons[icon]
-        return match
+        if match:
+            return match
+        else:
+            return 'images/sun.gif'
 
 
 # Create frame
