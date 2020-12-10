@@ -1,5 +1,5 @@
 # weatherApp
-Python script for pulling and displaying weather data from the OpenWeatherMap API.
+Python script for pulling and displaying weather data from the [OpenWeatherMap API](https://openweathermap.org/).
 
 Steps to run the script:
   1. Subscribe and retrieve API key from OpenWeatherMap
