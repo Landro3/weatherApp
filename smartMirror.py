@@ -8,11 +8,14 @@ from datetime import datetime
 
 class smartMirror():
     def __init__(self):
-        """Saving settings as variables"""
         self.background = 'black'
         self.foreground = 'white'
         self.Font1 = 'Helvetica'
-        self.weatherURL = 'https://api.openweathermap.org/data/2.5/onecall?lat=39.290386&lon=-76.612190&exclude=minutely,hourly&appid=b0083b440937e38f4ef91559b7c3a7b7'
+
+        # API key and url
+        f = open('key.txt', 'r')
+        appId = f.readline()
+        self.weatherURL = 'https://api.openweathermap.org/data/2.5/onecall?lat=39.290386&lon=-76.612190&exclude=minutely,hourly&appid=' + appId
 
         # Get current location
 
