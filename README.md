@@ -1,9 +1,9 @@
 # weatherApp
-Quick python exercise for pulling weather information from the wunderground API and displaying it.
+Python script for pulling and displaying weather data from the OpenWeatherMap API.
 
-Steps to load the panel:
-  1. Download .py script, requires python3 path to be installed
-  2. Move to desired directory
-  3. Open terminal 
-  4. cd to the directory of the script
-  5. Run the following command: python3 + name of file
+Steps to run the script:
+  1. Subscribe and retrieve API key from OpenWeatherMap
+  1. Create key.txt file in project root directory
+  1. Copy / Paste API key into key.txt
+  1. Adjust city name on line 155 of smartMirror.py
+  1. Run the following command in the project root directory: python3 + name of file
