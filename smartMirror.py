@@ -1,10 +1,11 @@
 # Class to handle main panel
 import json
 import ssl
-from tkinter import Tk, Label, Frame, N, NE, E, SE, S, SW, W, NW, PhotoImage
+from tkinter import Tk, Label, Frame, N, NE, E, SE, S, SW, W, NW, PhotoImage, Canvas, ARC
 from urllib.request import urlopen
 from time import localtime, strftime
 from datetime import datetime
+import pyotp
 
 class smartMirror():
     def __init__(self):
@@ -15,6 +16,7 @@ class smartMirror():
         # API key and url
         f = open('key.txt', 'r')
         appId = f.readline()
+        self.totpSecret = f.readline()
         self.weatherURL = 'https://api.openweathermap.org/data/2.5/onecall?lat=39.290386&lon=-76.612190&exclude=minutely,hourly&appid=' + appId
 
         # Get current location
@@ -23,6 +25,8 @@ class smartMirror():
         # Create top window frame
         self.root = Tk()
         self.root.title("Weather App")
+        # self.root.overrideredirect(1)
+        # self.root.overrideredirect(0)
         self.root.configure(background=self.background, padx=25, pady=50)
 
         # Create current info frame
@@ -47,23 +51,28 @@ class smartMirror():
         self.forecastFrame.configure(background=self.background)
         self.forecastFrame.grid(row=2, column=0, sticky=W)
 
+        # Create TOTP frame
+        self.totpFrame = Frame(self.root)
+        self.totpFrame.configure(background=self.background)
+        self.totpFrame.grid(row=2, column=1, sticky=SE)
+
         # Time Label
         self.timeLabel = Label(self.timeFrame,
                           font=(self.Font1,120),
                           bg=self.background,
                           fg=self.foreground)
-        self.timeLabel.pack()
+        self.timeLabel.grid(row=0, column=0, sticky=E)
 
         # Date label
         self.dateLabel = Label(self.timeFrame,
                            font=(self.Font1,60),
                            bg=self.background,
                            fg=self.foreground)
-        self.dateLabel.pack()
+        self.dateLabel.grid(row=1, column=0, sticky=E)
 
         # Location label
         self.locationLabel = Label(self.currentFrame,
-                              font=(self.Font1, 75),
+                              font=(self.Font1, 60),
                               bg=self.background,
                               fg=self.foreground)
         self.locationLabel.grid(row=0, column=0, columnspan=2, sticky=W)
@@ -113,6 +122,23 @@ class smartMirror():
             self.dayImage.grid(row=day, column=2)
             self.dayImages.append(self.dayImage)
 
+        # TOTP Canvas
+        self.totpCanvas = Canvas(
+            self.totpFrame,
+            bg=self.background,
+            bd=0,
+            highlightthickness=0                         
+        )
+        self.totpCanvas.columnconfigure(100)
+        self.totpCanvas.grid(row=0, column=0)
+        
+        # TOTP Label
+        self.totpLabel = Label(self.totpFrame,
+                              font=(self.Font1, 36),
+                              bg=self.background,
+                              fg=self.foreground)
+        self.totpLabel.grid(row=0, column=1, sticky=SE)
+
         # Update variable to only update weather once every 5 minutes
         # Time display is updated every second
         self.updateCounter = 0
@@ -125,15 +151,15 @@ class smartMirror():
         # Draw Time
         # Display and hide the colon every second
         if self.updateCounter % 2 == 0:
-            time = strftime('%-I:%M %p ', localtime())
+            time = strftime('%-I:%M %p', localtime())
         else:
-            time = strftime('%-I %M %p ', localtime())
+            time = strftime('%-I %M %p', localtime())
         self.timeLabel.configure(text=time)
 
         # Set date
-        self.dateLabel.configure(text= strftime('%-d %b %Y', localtime()))
+        self.dateLabel.configure(text=strftime('%-d %b %Y', localtime()))
 
-        """ Update all weather info every 5 minutes"""
+        '''Update all weather info every 5 minutes'''
         # Only update after update counter has reached 5 minutes
         if self.updateCounter == 0 or self.updateCounter == 5*60:
             # Reset counter so that it won't update twice at 5 minutes
@@ -190,6 +216,25 @@ class smartMirror():
                 photoImage = PhotoImage(file=self.icon_match(icon))
                 self.dayImages[day - 1].configure(image=photoImage)
                 self.dayImages[day - 1].image = photoImage
+
+        ''' Generate TOTP '''
+        if len(self.totpSecret) > 0:
+            totp = pyotp.TOTP(self.totpSecret).now()
+            second = int(strftime('%S', localtime()))
+            if second == 30 or second == 0:
+                self.totpCanvas.delete('all')
+            if second > 30:
+                second -= 30
+            extent = -second / 30 * 360
+            r = 15
+            x = self.totpCanvas.winfo_width() - 25
+            y = self.totpCanvas.winfo_height() - 25
+            self.totpCanvas.create_arc(
+                x-r, y-r, x+r, y+r, 
+                start=0, extent=extent, 
+                style=ARC, outline="white", width=5
+            )
+            self.totpLabel.configure(text=totp[:3] + ' ' + totp[3:])
         self.updateCounter += 1
         self.root.after(1000, self.drawGUI)
 
