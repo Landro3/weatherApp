@@ -25,6 +25,7 @@ class smartMirror():
         # Create top window frame
         self.root = Tk()
         self.root.title("Weather App")
+        self.root.config(cursor='none')
         self.root.attributes('-fullscreen', True)
         self.root.configure(background=self.background, padx=25, pady=50)
 
