@@ -25,8 +25,7 @@ class smartMirror():
         # Create top window frame
         self.root = Tk()
         self.root.title("Weather App")
-        # self.root.overrideredirect(1)
-        # self.root.overrideredirect(0)
+        self.root.attributes('-fullscreen', True)
         self.root.configure(background=self.background, padx=25, pady=50)
 
         # Create current info frame
@@ -55,6 +54,7 @@ class smartMirror():
         self.totpFrame = Frame(self.root)
         self.totpFrame.configure(background=self.background)
         self.totpFrame.grid(row=2, column=1, sticky=SE)
+        self.root.rowconfigure(2, weight=1)
 
         # Time Label
         self.timeLabel = Label(self.timeFrame,
