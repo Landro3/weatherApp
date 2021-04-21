@@ -49,7 +49,7 @@ class smartMirror():
         # Create forecast info frame to go below current info
         self.forecastFrame = Frame(self.root)
         self.forecastFrame.configure(background=self.background)
-        self.forecastFrame.grid(row=2, column=0, sticky=W)
+        self.forecastFrame.grid(row=2, column=0, sticky=NW)
 
         # Create TOTP frame
         self.totpFrame = Frame(self.root)
